@@ -209,7 +209,11 @@ async fn update_review(
     let updated = state
         .db
         .supabase
-        .update_json("reviews", &[eq("id", &id)], Value::Object(body))
+        .update_json(
+            "reviews",
+            &[eq("id", &id), eq("user_id", &auth_user.id)],
+            Value::Object(body),
+        )
         .await?;
     let row = updated
         .into_iter()

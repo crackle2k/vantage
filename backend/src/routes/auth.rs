@@ -253,9 +253,10 @@ async fn ensure_auth_defaults(
 fn registration_role(role: Option<&UserRole>) -> Result<&'static str> {
     match role.unwrap_or(&UserRole::Customer) {
         UserRole::Customer => Ok("customer"),
-        UserRole::BusinessOwner => Ok("business_owner"),
-        UserRole::Admin => Err(AppError::Forbidden(
-            "Admin accounts cannot be self-registered".into(),
+        // Business-owner and admin roles cannot be self-assigned at registration;
+        // owner status is granted through the verified claim flow.
+        UserRole::BusinessOwner | UserRole::Admin => Err(AppError::Forbidden(
+            "This role cannot be self-registered".into(),
         )),
     }
 }
