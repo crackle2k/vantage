@@ -140,16 +140,19 @@ fn user_json(user: &AuthUserRecord, include_private: bool) -> Value {
         .user_metadata
         .get("preferences")
         .unwrap_or(&Value::Null);
+    let role = metadata_str(&user.app_metadata, "role").unwrap_or("customer");
+    // Never expose admin status on public profiles — show as customer instead.
+    let public_role = if role == "admin" { "customer" } else { role };
+
     let mut value = json!({
         "id": user.id,
         "_id": user.id,
         "name": name,
         "full_name": full_name,
-        "role": metadata_str(&user.app_metadata, "role").unwrap_or("customer"),
+        "role": if include_private { role } else { public_role },
         "profile_picture": metadata_str(&user.user_metadata, "profile_picture"),
         "about_me": metadata_str(&user.user_metadata, "about_me"),
         "created_at": user.created_at,
-        "subscription_tier": metadata_str(&user.app_metadata, "subscription_tier").unwrap_or("FREE"),
         "preferences": preferences,
         "preferred_categories": preferences.get("preferred_categories").cloned().unwrap_or(Value::Null),
         "preferred_vibes": preferences.get("preferred_vibes").cloned().unwrap_or(Value::Null),
@@ -161,6 +164,8 @@ fn user_json(user: &AuthUserRecord, include_private: bool) -> Value {
 
     if include_private {
         value["email"] = json!(email);
+        value["subscription_tier"] =
+            json!(metadata_str(&user.app_metadata, "subscription_tier").unwrap_or("FREE"));
     }
 
     value
